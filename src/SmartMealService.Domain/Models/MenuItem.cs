@@ -2,7 +2,7 @@
 
 public sealed class MenuItem
 {
-    public required Guid Id { get; init; }
+    public required long Id { get; init; }
     public required string Article { get; init; }
     public required string? Name { get; init; }
     public required decimal Price { get; init; }
