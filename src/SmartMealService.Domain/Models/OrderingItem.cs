@@ -2,6 +2,6 @@
 
 public sealed class OrderingItem
 {
-    public required MenuItem MenuItem { get; init; }
+    public required long MenuItemId { get; init; }
     public required double Quantity { get; init; }
 }
