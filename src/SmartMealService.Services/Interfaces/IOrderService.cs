@@ -4,6 +4,6 @@ namespace SmartMealService.Services.Interfaces;
 
 public interface IOrderService
 {
-    Task<List<MenuItem>> GetMenuAsync(bool withPrice, CancellationToken cancellationToken);
-    Task<bool> SendOrderAsync(Order order, CancellationToken cancellationToken);
+    Task<List<SmsMenuItem>> GetMenuAsync(bool withPrice, CancellationToken cancellationToken);
+    Task<bool> SendOrderAsync(SmsOrder smsOrder, CancellationToken cancellationToken);
 }

@@ -4,5 +4,5 @@ namespace SmartMealService.Infrastructure;
 
 public interface IMenuRepository
 {
-    Task SaveMenuItems(List<MenuItem>  menuItems);
+    Task SaveMenuItems(List<SmsMenuItem>  menuItems);
 }

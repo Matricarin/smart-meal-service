@@ -26,7 +26,7 @@ public sealed class HttpOrderService : IOrderService
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authToken);
     }
 
-    public async Task<List<MenuItem>> GetMenuAsync(bool withPrice, CancellationToken cancellationToken)
+    public async Task<List<SmsMenuItem>> GetMenuAsync(bool withPrice, CancellationToken cancellationToken)
     {
         var requestBody = new HttpCommandRequest<GetMenuParams>
         {
@@ -50,7 +50,7 @@ public sealed class HttpOrderService : IOrderService
             throw new Exception(); //   TODO: add new exception
         }
 
-        return jsonResponse.Data.MenuItems.Select(menuItem => new MenuItem
+        return jsonResponse.Data.MenuItems.Select(menuItem => new SmsMenuItem
             {
                 Id = long.Parse(menuItem.Id),
                 Article = menuItem.Article,
@@ -63,11 +63,11 @@ public sealed class HttpOrderService : IOrderService
             .ToList();
     }
 
-    public async Task<bool> SendOrderAsync(Order order, CancellationToken cancellationToken)
+    public async Task<bool> SendOrderAsync(SmsOrder smsOrder, CancellationToken cancellationToken)
     {
         var menuItemsDto = new List<HttpOrderItemDto>();
 
-        foreach (OrderingItem orderingItem in order.Items)
+        foreach (SmsOrderingItem orderingItem in smsOrder.Items)
         {
             menuItemsDto.Add(new HttpOrderItemDto
             {
@@ -79,7 +79,7 @@ public sealed class HttpOrderService : IOrderService
         var requestBody = new HttpCommandRequest<SendOrderParams>
         {
             Command = "SendOrder",
-            CommandParameters = new SendOrderParams { OrderId = order.Id.ToString(), MenuItems = menuItemsDto }
+            CommandParameters = new SendOrderParams { OrderId = smsOrder.Id.ToString(), MenuItems = menuItemsDto }
         };
 
         var response = await _client.PostAsJsonAsync(_client.BaseAddress, requestBody, cancellationToken);
