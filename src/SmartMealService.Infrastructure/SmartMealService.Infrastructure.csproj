@@ -7,7 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Serilog" Version="4.3.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\SmartMealService.Domain\SmartMealService.Domain.csproj" />
+    <ProjectReference Include="..\SmartMealService.Services\SmartMealService.Services.csproj" />
   </ItemGroup>
 
 </Project>
