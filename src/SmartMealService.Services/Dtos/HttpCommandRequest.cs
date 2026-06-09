@@ -1,7 +1,7 @@
 ﻿namespace SmartMealService.Services.Dtos;
 
-public class RequestDto
+public class HttpCommandRequest<T>
 {
     public string? Command { get; set; }
-    public object? CommandParameters { get; set; }
+    public T? CommandParameters { get; set; }
 }
