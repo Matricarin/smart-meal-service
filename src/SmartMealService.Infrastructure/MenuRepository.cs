@@ -8,7 +8,7 @@ public sealed class MenuRepository : IMenuRepository
 {
     private readonly ILogger _logger;
 
-    public Task SaveMenuItems(List<MenuItem> menuItems)
+    public Task SaveMenuItems(List<SmsMenuItem> menuItems)
     {
         throw new NotImplementedException();
     }
