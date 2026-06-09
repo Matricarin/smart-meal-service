@@ -23,13 +23,13 @@ jobs:
         dotnet-version: 8.0.x
 
     - name: Restore
-      run: dotnet restore ./SmartMealSevice.slnx
+      run: dotnet restore .\SmartMealSevice.slnx
 
     - name: Build
-      run: dotnet build ./SmartMealSevice.slnx --configuration Release --no-restore
+      run: dotnet build .\SmartMealSevice.slnx --configuration Release --no-restore
 
     - name: Run Tests
-      run: dotnet test ./SmartMealSevice.slnx --configuration Release --no-build --verbosity normal
+      run: dotnet test .\SmartMealSevice.slnx --configuration Release --no-build --verbosity normal
 
 
   
