@@ -1,6 +1,6 @@
 ﻿namespace SmartMealService.Domain.Models;
 
-public sealed class MenuItem
+public sealed class SmsMenuItem
 {
     public required long Id { get; init; }
     public required string Article { get; init; }
