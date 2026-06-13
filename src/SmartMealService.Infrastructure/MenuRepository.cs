@@ -18,7 +18,7 @@ public sealed class MenuRepository : IMenuRepository
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task SaveMenuItems(List<SmsMenuItem> menuItems, CancellationToken cancellationToken)
+    public async Task SaveMenuItemsAsync(List<SmsMenuItem> menuItems, CancellationToken cancellationToken)
     {
         if (menuItems == null || menuItems.Count == 0)
         {
