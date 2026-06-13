@@ -1,6 +1,6 @@
 ﻿namespace SmartMealService.Infrastructure;
 
-public sealed class MenuDbContext
+public sealed class MenuDbContext 
 {
     
 }
