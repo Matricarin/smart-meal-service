@@ -3,12 +3,117 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:SmartMealService.GuiClient"
+        xmlns:viewModels="clr-namespace:SmartMealService.GuiClient.ViewModels"
         mc:Ignorable="d"
-        Title="MainWindow" 
-        Height="450" 
-        Width="800">
-    <Grid>
+        Title="Тестовое WPF-приложение для SmartMealService"
+        Height="450"
+        Width="800"
+        WindowStartupLocation="CenterScreen"
+        Background="#F5F5F5">
+
+    <d:Window.DataContext>
+        <viewModels:MainWindowViewModel />
+    </d:Window.DataContext>
+
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Text="Редактор переменных среды среды пользователя"
+                   FontSize="18"
+                   FontWeight="Bold"
+                   Foreground="#333333"
+                   Margin="0,0,0,15" />
+
+        <DataGrid Grid.Row="1"
+                  ItemsSource="{Binding EnvironmentVariables}"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  SelectionMode="Single"
+                  GridLinesVisibility="Horizontal"
+                  BorderBrush="#CCCCCC"
+                  BorderThickness="1"
+                  Background="White"
+                  RowHeight="32"
+                  FontSize="14">
+
+            <DataGrid.ColumnHeaderStyle>
+                <Style TargetType="DataGridColumnHeader">
+                    <Setter Property="Background" Value="#EAEAEA" />
+                    <Setter Property="Foreground" Value="#222222" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                    <Setter Property="Padding" Value="8,5,8,5" />
+                    <Setter Property="BorderBrush" Value="#CCCCCC" />
+                    <Setter Property="BorderThickness" Value="0,0,1,1" />
+                </Style>
+            </DataGrid.ColumnHeaderStyle>
+
+            <DataGrid.Columns>
+
+                <DataGridTextColumn Header="Поле"
+                                    Binding="{Binding Key, Mode=OneWay}"
+                                    IsReadOnly="True"
+                                    Width="2*">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Margin" Value="8,0" />
+                            <Setter Property="VerticalAlignment" Value="Center" />
+                            <Setter Property="FontWeight" Value="Medium" />
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <DataGridTextColumn Header="Значение"
+                                    Binding="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    Width="3*">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Margin" Value="8,0" />
+                            <Setter Property="VerticalAlignment" Value="Center" />
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                    <DataGridTextColumn.EditingElementStyle>
+                        <Style TargetType="TextBox">
+                            <Setter Property="Padding" Value="5,0" />
+                            <Setter Property="VerticalContentAlignment" Value="Center" />
+                        </Style>
+                    </DataGridTextColumn.EditingElementStyle>
+                </DataGridTextColumn>
+
+                <DataGridTextColumn Header="Комментарий"
+                                    Binding="{Binding Comment, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    Width="4*">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Margin" Value="8,0" />
+                            <Setter Property="VerticalAlignment" Value="Center" />
+                            <Setter Property="FontStyle" Value="Italic" />
+                            <Setter Property="Foreground" Value="#666666" />
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                    <DataGridTextColumn.EditingElementStyle>
+                        <Style TargetType="TextBox">
+                            <Setter Property="Padding" Value="5,0" />
+                            <Setter Property="VerticalContentAlignment" Value="Center" />
+                        </Style>
+                    </DataGridTextColumn.EditingElementStyle>
+                </DataGridTextColumn>
+
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <StatusBar Grid.Row="2" Background="Transparent" Margin="0,10,0,0">
+            <StatusBarItem Padding="0">
+                <TextBlock Text="* Изменения сохраняются автоматически при редактировании ячеек"
+                           Foreground="#888888"
+                           FontSize="12" />
+            </StatusBarItem>
+        </StatusBar>
 
     </Grid>
 </Window>
