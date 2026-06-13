@@ -29,7 +29,10 @@ public sealed class MenuDbContext : DbContext
                 .IsRequired()
                 .HasMaxLength(255)
                 .HasColumnName("article");
-            
+
+            entity.HasIndex(e => e.Article)
+                .IsUnique();
+
             entity.Property(e => e.Name)
                 .IsRequired()
                 .HasMaxLength(255)
