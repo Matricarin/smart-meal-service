@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SmartMealService.Infrastructure\SmartMealService.Infrastructure.csproj" />
+    <ProjectReference Include="..\SmartMealService.Services\SmartMealService.Services.csproj" />
   </ItemGroup>
 
 </Project>
