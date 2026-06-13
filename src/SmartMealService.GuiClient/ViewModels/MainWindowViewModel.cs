@@ -1,6 +1,8 @@
-﻿namespace SmartMealService.GuiClient.ViewModels;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
-public sealed class MainWindowViewModel
+namespace SmartMealService.GuiClient.ViewModels;
+
+public sealed partial class MainWindowViewModel : ObservableObject
 {
     
 }
