@@ -1,4 +1,6 @@
-﻿using SmartMealService.GuiClient.Application;
+﻿using Serilog;
+
+using SmartMealService.GuiClient.Application;
 using SmartMealService.GuiClient.Models;
 
 namespace SmartMealService.GuiClient.Infrastructure;
@@ -6,10 +8,11 @@ namespace SmartMealService.GuiClient.Infrastructure;
 public sealed class VariablesRepository : IVariablesRepository
 {
     private readonly VariablesDbContext _context;
-
-    public VariablesRepository(VariablesDbContext context)
+    private readonly ILogger _logger;
+    public VariablesRepository(VariablesDbContext context, ILogger logger)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public Task AddVariableAsync(CustomEnvironmentVariable variable, CancellationToken token)
