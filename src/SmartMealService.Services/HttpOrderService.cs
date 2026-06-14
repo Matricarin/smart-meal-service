@@ -44,17 +44,17 @@ public sealed class HttpOrderService : IOrderService
 
         if (jsonResponse is null || !jsonResponse.Success)
         {
-            throw new Exception();
+            throw new Exception("Получен ошибочный ответ от сервера");
         }
 
         if (jsonResponse.Data is null)
         {
-            throw new Exception();
+            throw new Exception("Не получены данные от сервера.");
         }
 
         if (jsonResponse.Data.MenuItems is null)
         {
-            throw new Exception();
+            throw new Exception("Не получено меню от сервера.");
         }
 
         return jsonResponse.Data.MenuItems.Select(menuItem => new SmsMenuItem

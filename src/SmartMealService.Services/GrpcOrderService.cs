@@ -26,7 +26,7 @@ public sealed class GrpcOrderService : IOrderService
 
         if (!response.Success)
         {
-            throw new Exception(); // TODO: add exception
+            throw new Exception("Получен ошибочный ответ от сервера."); 
         }
 
         var domainItems = new List<SmsMenuItem>();
