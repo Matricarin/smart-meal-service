@@ -37,7 +37,7 @@ try
 
     var serviceProvider = new ServiceCollection()
         .AddSingleton<IConfiguration>(configuration)
-        .AddSingleton<ILogger>(Log.Logger)
+        .AddSingleton(Log.Logger)
         .AddSingleton<HttpClient>()
         .AddSingleton(authData)
         .AddSingleton(new Uri(uriString))

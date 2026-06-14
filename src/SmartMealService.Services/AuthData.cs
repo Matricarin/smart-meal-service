@@ -5,10 +5,10 @@ public sealed class AuthData
     public string UserName { get; }
     public string Password { get; }
 
-    public AuthData(string password, string userName)
+    public AuthData(string? password, string? userName)
     {
-        Password = password;
-        UserName = userName;
+        Password = password ?? throw new ArgumentNullException(nameof(password));
+        UserName = userName ?? throw new ArgumentNullException(nameof(userName));
     }
 
     public override string ToString()

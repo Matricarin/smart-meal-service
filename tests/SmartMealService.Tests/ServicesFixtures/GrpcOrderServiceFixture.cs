@@ -115,7 +115,6 @@ public sealed class GrpcOrderServiceFixture
     [Fact]
     public async Task GetMenuAsync_WhenIdIsNotValidNumber_ShouldThrowFormatException()
     {
-        // Arrange
         var grpcResponse = new GetMenuResponse { Success = true };
         grpcResponse.MenuItems.Add(new MenuItem { Id = "not-a-number" }); // Вызовет падение на long.Parse()
 

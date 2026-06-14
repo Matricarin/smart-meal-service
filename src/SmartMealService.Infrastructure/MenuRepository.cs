@@ -18,9 +18,9 @@ public sealed class MenuRepository : IMenuRepository
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task SaveMenuItemsAsync(List<SmsMenuItem> menuItems, CancellationToken cancellationToken)
+    public async Task SaveMenuItemsAsync(List<SmsMenuItem>? menuItems, CancellationToken cancellationToken)
     {
-        if (menuItems == null || menuItems.Count == 0)
+        if (menuItems is null || menuItems.Count == 0)
         {
             _logger.Warning("Передан пустой список блюд.");
             return;
@@ -35,7 +35,7 @@ public sealed class MenuRepository : IMenuRepository
 
             var existingItems = await _context.MenuItems
                 .Where(m => incomingArticles.Contains(m.Article))
-                .ToDictionaryAsync(m => m.Article, cancellationToken);
+                .ToDictionaryAsync(m => m.Article ?? "(пустой код)", cancellationToken);
 
             int updatedCount = 0;
             int insertedCount = 0;

@@ -40,13 +40,10 @@ public sealed class HttpOrderServiceFixture
     [Fact]
     public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
     {
-        // Arrange
         using var client = new HttpClient(new FakeHttpMessageHandler());
 
-        // Act
         Action act = () => new HttpOrderService(client, _authData, _baseUri, null!);
 
-        // Assert
         act.Should().Throw<ArgumentNullException>().WithParameterName("logger");
     }
 
