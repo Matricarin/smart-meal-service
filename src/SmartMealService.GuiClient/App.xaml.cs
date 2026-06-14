@@ -15,7 +15,7 @@ using SmartMealService.GuiClient.Views;
 
 namespace SmartMealService.GuiClient;
 
-public partial class App : System.Windows.Application
+public partial class App
 {
     private const string MutexName = nameof(GuiClient);
     private Mutex? _mutex;
@@ -30,8 +30,7 @@ public partial class App : System.Windows.Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
-        bool createdNew;
-        _mutex = new Mutex(true, MutexName, out createdNew);
+        _mutex = new Mutex(true, MutexName, out bool createdNew);
 
         if (!createdNew)
         {
@@ -48,7 +47,7 @@ public partial class App : System.Windows.Application
 
         InitializeEnvironmentVariablesAsync(_serviceProvider);
 
-        DispatcherUnhandledException += (s, args) => { Debug.WriteLine(args.Exception.Message); };
+        DispatcherUnhandledException += (_, args) => { Debug.WriteLine(args.Exception.Message); };
 
         MainWindow mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
         var mainWindowViewModel = _serviceProvider.GetRequiredService<MainWindowViewModel>();
@@ -68,9 +67,9 @@ public partial class App : System.Windows.Application
 
         context.Database.EnsureCreated();
 
-        var requiredVariables = configuration.GetSection("EnvironmentVariables").Get<string[]>();
+        var requiredVariables = configuration.GetSection("_environmentVariables").Get<string[]>();
 
-        if (requiredVariables != null)
+        if (requiredVariables is not null)
         {
             foreach (var key in requiredVariables)
             {
@@ -112,7 +111,7 @@ public partial class App : System.Windows.Application
             .CreateLogger();
 
         services.AddSingleton<IConfiguration>(configuration);
-        services.AddSingleton<ILogger>(Log.Logger);
+        services.AddSingleton(Log.Logger);
         services.AddDbContext<VariablesDbContext>(options =>
             options.UseSqlite(configuration.GetConnectionString("DefaultConnection")));
         services.AddScoped<IVariablesRepository, VariablesRepository>();

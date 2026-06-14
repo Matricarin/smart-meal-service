@@ -6,6 +6,9 @@ using CommunityToolkit.Mvvm.Input;
 using Serilog;
 
 using SmartMealService.GuiClient.Application;
+using SmartMealService.GuiClient.Models;
+
+#pragma warning disable MVVMTK0034
 
 namespace SmartMealService.GuiClient.ViewModels;
 
@@ -14,38 +17,34 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly ILogger _logger;
     private readonly IVariablesRepository _repository;
 
-    [ObservableProperty] private string? _errorMessage;
+    [ObservableProperty] private ObservableCollection<VariableViewModel> _environmentVariables = [];
 
-    [ObservableProperty] private bool _isLoading;
-
-    public ObservableCollection<VariableViewModel> EnvironmentVariables { get; } = new();
 
     public MainWindowViewModel(IVariablesRepository repository, ILogger logger)
     {
         _repository = repository;
         _logger = logger;
     }
-
+    
     [RelayCommand]
     private async Task LoadVariablesAsync(CancellationToken token)
     {
-        _isLoading = true;
-        _errorMessage = null;
         _logger.Information("Запуск загрузки переменных среды в UI...");
 
         try
         {
-            EnvironmentVariables.Clear();
+            _environmentVariables.Clear();
 
             var variables = await _repository.GetAllVariablesAsync(token);
 
             foreach (var variable in variables)
             {
                 var itemViewModel = new VariableViewModel(variable, _repository, _logger);
-                EnvironmentVariables.Add(itemViewModel);
+
+                _environmentVariables.Add(itemViewModel);
             }
 
-            _logger.Information("Успешно загружено {Count} переменных в таблицу", EnvironmentVariables.Count);
+            _logger.Information("Успешно загружено {Count} переменных в таблицу", _environmentVariables.Count);
         }
         catch (OperationCanceledException)
         {
@@ -53,12 +52,60 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            _errorMessage = "Не удалось загрузить переменные среды.";
             _logger.Error(ex, "Критическая ошибка при заполнении таблицы DataGrid данными");
         }
-        finally
+    }
+
+    public async Task AddNewVariableAsync(VariableViewModel variableVm)
+    {
+        if (string.IsNullOrWhiteSpace(variableVm.Key))
         {
-            _isLoading = false;
+            _logger.Warning("Попытка добавить переменную с пустым ключом.");
+            return;
+        }
+
+        try
+        {
+            var customVar = new CustomEnvironmentVariable
+            {
+                Key = variableVm.Key, Value = variableVm.Value, Comment = variableVm.Comment
+            };
+
+            await _repository.AddVariableAsync(customVar, CancellationToken.None);
+
+            variableVm.InitializeDependencies(_repository, _logger);
+
+            _logger.Information("Добавлена новая переменная среды: {Key}", variableVm.Key);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Ошибка при добавлении переменной среды {Key}", variableVm.Key);
+        }
+    }
+
+    [RelayCommand]
+    private async Task DeleteVariableAsync(VariableViewModel? variable)
+    {
+        if (variable == null)
+        {
+            return;
+        }
+
+        try
+        {
+            var customVar = new CustomEnvironmentVariable
+            {
+                Key = variable.Key, Value = variable.Value, Comment = variable.Comment
+            };
+            await _repository.DeleteVariableAsync(customVar, CancellationToken.None);
+
+            _environmentVariables.Remove(variable);
+
+            _logger.Information("Удалена переменная среды: {Key}", variable.Key);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Ошибка при удалении переменной среды {Key}", variable.Key);
         }
     }
 }

@@ -22,25 +22,19 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0"
-                   Text="Редактор переменных среды среды пользователя"
-                   FontSize="18"
-                   FontWeight="Bold"
-                   Foreground="#333333"
-                   Margin="0,0,0,15" />
-
         <DataGrid Grid.Row="1"
-                  ItemsSource="{Binding EnvironmentVariables}"
-                  AutoGenerateColumns="False"
-                  CanUserAddRows="False"
-                  CanUserDeleteRows="False"
-                  SelectionMode="Single"
-                  GridLinesVisibility="Horizontal"
-                  BorderBrush="#CCCCCC"
-                  BorderThickness="1"
-                  Background="White"
-                  RowHeight="32"
-                  FontSize="14">
+            ItemsSource="{Binding EnvironmentVariables}"
+            AutoGenerateColumns="False"
+            CanUserAddRows="True"
+            CanUserDeleteRows="True"
+            SelectionMode="Single"
+            RowEditEnding="VariablesDataGrid_RowEditEnding"
+            PreviewKeyDown="VariablesDataGrid_PreviewKeyDown"
+            BorderBrush="#CCCCCC"
+            BorderThickness="1"
+            Background="White"
+            RowHeight="32"
+            FontSize="14">
 
             <DataGrid.ColumnHeaderStyle>
                 <Style TargetType="DataGridColumnHeader">
@@ -56,8 +50,7 @@
             <DataGrid.Columns>
 
                 <DataGridTextColumn Header="Поле"
-                                    Binding="{Binding Key, Mode=OneWay}"
-                                    IsReadOnly="True"
+                                    Binding="{Binding Key, Mode=TwoWay}"
                                     Width="2*">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">

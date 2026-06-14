@@ -9,14 +9,25 @@ namespace SmartMealService.GuiClient.ViewModels;
 
 public partial class VariableViewModel : ObservableObject
 {
-    private readonly CustomEnvironmentVariable _model;
-    private readonly IVariablesRepository _repository;
-    private readonly ILogger _logger;
+    private readonly CustomEnvironmentVariable? _model;
+    [ObservableProperty] private string _comment;
 
-    public VariableViewModel(
+    [ObservableProperty] private string _key;
+
+    private ILogger? _logger;
+
+    private IVariablesRepository? _repository;
+
+    [ObservableProperty] private string _value;
+
+    public bool IsNew => _repository is null;
+
+    public VariableViewModel
+    (
         CustomEnvironmentVariable model,
         IVariablesRepository repository,
-        ILogger logger)
+        ILogger logger
+    )
     {
         _model = model;
         _repository = repository;
@@ -27,31 +38,52 @@ public partial class VariableViewModel : ObservableObject
         _comment = model.Comment ?? string.Empty;
     }
 
-    [ObservableProperty]
-    private string _key;
+    public VariableViewModel()
+    {
+        _model = new CustomEnvironmentVariable { Key = string.Empty, Value = string.Empty };
+        _key = string.Empty;
+        _value = string.Empty;
+        _comment = string.Empty;
+    }
 
-    [ObservableProperty]
-    private string _value;
-
-    [ObservableProperty]
-    private string _comment;
+    public void InitializeDependencies(IVariablesRepository repository, ILogger logger)
+    {
+        _repository = repository;
+        _logger = logger;
+    }
 
     partial void OnValueChanged(string value)
     {
-        if (_model.Value == value) return;
+        if (_model?.Value == value)
+        {
+            return;
+        }
 
-        _model.Value = value;
+        _model?.Value = value;
+
+        if (_repository == null || _logger == null)
+        {
+            return;
+        }
 
         _logger.Information("Изменение переменной среды: {Key} = '{Value}'", _key, value);
 
         Task.Run(async () => await SaveChangesAsync());
     }
 
-    partial void OnCommentChanged(string? value)
+    partial void OnCommentChanged(string value)
     {
-        if (_model.Comment == value) return;
+        if (_model?.Comment == value)
+        {
+            return;
+        }
 
-        _model.Comment = value;
+        _model?.Comment = value;
+
+        if (_repository == null || _logger == null)
+        {
+            return;
+        }
 
         _logger.Information("Изменение комментария для переменной {Key}: '{Comment}'", _key, value);
 
@@ -62,11 +94,14 @@ public partial class VariableViewModel : ObservableObject
     {
         try
         {
-            await _repository.UpdateVariableAsync(_model, CancellationToken.None);
+            if (_repository is not null && _model is not null)
+            {
+                await _repository.UpdateVariableAsync(_model, CancellationToken.None);
+            }
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Ошибка при сохранении переменной {Key} в репозиторий", Key);
+            _logger?.Error(ex, "Ошибка при сохранении переменной {Key} в репозиторий", Key);
         }
     }
 }
