@@ -28,6 +28,8 @@ public sealed class HttpOrderService : IOrderService
 
     public async Task<List<SmsMenuItem>> GetMenuAsync(bool withPrice, CancellationToken cancellationToken)
     {
+        _logger.Debug("Отправка запроса на получение меню.");
+
         var requestBody = new HttpCommandRequest<GetMenuParams>
         {
             Command = "GetMenu", CommandParameters = new GetMenuParams { WithPrice = withPrice }
@@ -42,22 +44,27 @@ public sealed class HttpOrderService : IOrderService
 
         if (jsonResponse is null || !jsonResponse.Success)
         {
-            throw new Exception(); //   TODO: add new exception
+            throw new Exception();
         }
 
         if (jsonResponse.Data is null)
         {
-            throw new Exception(); //   TODO: add new exception
+            throw new Exception();
+        }
+
+        if (jsonResponse.Data.MenuItems is null)
+        {
+            throw new Exception();
         }
 
         return jsonResponse.Data.MenuItems.Select(menuItem => new SmsMenuItem
             {
-                Id = long.Parse(menuItem.Id),
-                Article = menuItem.Article,
-                Name = menuItem.Name,
+                Id = long.Parse(menuItem.Id ?? throw new ArgumentNullException(nameof(menuItem.Id))),
+                Article = menuItem.Article ?? "(пустой код)",
+                Name = menuItem.Name ?? "(пустое имя)",
                 Price = menuItem.Price,
                 IsWeighted = menuItem.IsWeighted,
-                FullPath = menuItem.FullPath,
+                FullPath = menuItem.FullPath ?? "(пустой путь)",
                 Barcodes = menuItem.Barcodes ?? []
             })
             .ToList();
@@ -65,6 +72,8 @@ public sealed class HttpOrderService : IOrderService
 
     public async Task<bool> SendOrderAsync(SmsOrder smsOrder, CancellationToken cancellationToken)
     {
+        _logger.Debug("Отправка заказа на сервер.");
+
         var menuItemsDto = new List<HttpOrderItemDto>();
 
         foreach (SmsOrderingItem orderingItem in smsOrder.Items)
