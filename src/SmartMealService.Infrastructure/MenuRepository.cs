@@ -9,6 +9,7 @@ namespace SmartMealService.Infrastructure;
 
 public sealed class MenuRepository : IMenuRepository
 {
+    private const int ChunkSize = 100; // Оптимальный размер пакета для Enterprise-систем
     private readonly MenuDbContext _context;
     private readonly ILogger _logger;
 
@@ -28,59 +29,59 @@ public sealed class MenuRepository : IMenuRepository
 
         try
         {
-            var incomingItems = menuItems.ToList();
-            var incomingArticles = incomingItems.Select(i => i.Article).ToList();
-
-            _logger.Information("Получено: {Count} шт.", incomingItems.Count);
-
-            var existingItems = await _context.MenuItems
-                .Where(m => incomingArticles.Contains(m.Article))
-                .ToDictionaryAsync(m => m.Article ?? "(пустой код)", cancellationToken);
+            _logger.Information("Получено для обработки: {Count} шт.", menuItems.Count);
 
             int updatedCount = 0;
             int insertedCount = 0;
             int skippedCount = 0;
 
-            foreach (var incomingItem in incomingItems)
+            //  UPD: выгребаем данные чанками, чтобы не материализовать полностью все коллекцию в память
+            foreach (var chunk in menuItems.Chunk(ChunkSize))
             {
-                if (existingItems.TryGetValue(incomingItem.Article, out var existingItem))
-                {
-                    if (existingItem.Name != incomingItem.Name ||
-                        existingItem.Price != incomingItem.Price)
-                    { 
-                        existingItem.Name = incomingItem.Name;
-                        existingItem.Price = incomingItem.Price;
+                var incomingArticles = chunk.Select(i => i.Article).ToList();
 
-                        _context.MenuItems.Update(existingItem);
-                        updatedCount++;
+                var existingItemsDict = await _context.MenuItems
+                    .Where(m => incomingArticles.Contains(m.Article))
+                    .ToDictionaryAsync(m => m.Article ?? "(пустой код)", cancellationToken);
+
+                foreach (var incomingItem in chunk)
+                {
+                    if (existingItemsDict.TryGetValue(incomingItem.Article, out var existingItem))
+                    {
+                        if (existingItem.Name != incomingItem.Name ||
+                            existingItem.Price != incomingItem.Price)
+                        {
+                            existingItem.Name = incomingItem.Name;
+                            existingItem.Price = incomingItem.Price;
+
+                            _context.MenuItems.Update(existingItem);
+                            updatedCount++;
+                        }
+                        else
+                        {
+                            skippedCount++;
+                        }
                     }
                     else
                     {
-                        skippedCount++;
+                        await _context.MenuItems.AddAsync(incomingItem, cancellationToken);
+                        insertedCount++;
                     }
                 }
-                else
+
+                if (insertedCount > 0 || updatedCount > 0)
                 {
-                    await _context.MenuItems.AddAsync(incomingItem, cancellationToken);
-                    insertedCount++;
+                    await _context.SaveChangesAsync(cancellationToken);
                 }
             }
 
-            if (insertedCount > 0 || updatedCount > 0)
-            {
-                await _context.SaveChangesAsync(cancellationToken);
-
-                _logger.Information("Добавлено: {Inserted}, Обновлено: {Updated}, Без изменений: {Skipped}.",
-                    insertedCount, updatedCount, skippedCount);
-            }
-            else
-            {
-                _logger.Information("Пропущено: {Skipped}.", skippedCount);
-            }
+            _logger.Information(
+                "Обработка завершена. Добавлено: {Inserted}, Обновлено: {Updated}, Без изменений: {Skipped}.",
+                insertedCount, updatedCount, skippedCount);
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Ошибка при выполнении операции для меню.");
+            _logger.Error(ex, "Ошибка при выполнении пакетной операции для меню.");
             throw;
         }
     }
@@ -90,9 +91,7 @@ public sealed class MenuRepository : IMenuRepository
         try
         {
             _logger.Information("Инициализация базы данных.");
-
             await _context.Database.EnsureCreatedAsync(cancellationToken);
-
             _logger.Information("База данных успешно инициализирована.");
         }
         catch (Exception ex)
