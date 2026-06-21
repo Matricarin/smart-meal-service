@@ -18,8 +18,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly IVariablesRepository _repository;
 
     [ObservableProperty] private ObservableCollection<VariableViewModel> _environmentVariables = [];
-
-
+    
     public MainWindowViewModel(IVariablesRepository repository, ILogger logger)
     {
         _repository = repository;
