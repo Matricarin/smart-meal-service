@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
@@ -28,11 +29,11 @@ public sealed class HttpOrderServiceFixture
         _baseUri = new Uri("https://api.smartmeal.com/v1/");
         _authData = new AuthData("password", "user");
     }
-    
+
     [Fact]
     public void Constructor_WithNullClient_ShouldThrowArgumentNullException()
     {
-        Action act = () => new HttpOrderService(null!, _authData, _baseUri, _loggerMock);
+        Action act = () => new HttpOrderService(null!, _loggerMock);
 
         act.Should().Throw<ArgumentNullException>().WithParameterName("client");
     }
@@ -40,9 +41,9 @@ public sealed class HttpOrderServiceFixture
     [Fact]
     public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
     {
-        using var client = new HttpClient(new FakeHttpMessageHandler());
+        using HttpClient client = new(new FakeHttpMessageHandler()) { BaseAddress = _baseUri };
 
-        Action act = () => new HttpOrderService(client, _authData, _baseUri, null!);
+        Action act = () => new HttpOrderService(client, null!);
 
         act.Should().Throw<ArgumentNullException>().WithParameterName("logger");
     }
@@ -50,10 +51,15 @@ public sealed class HttpOrderServiceFixture
     [Fact]
     public void Constructor_ValidArguments_ShouldConfigureClientCorrectly()
     {
-        using var client = new HttpClient(new FakeHttpMessageHandler());
-        var expectedAuthToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(_authData.ToString()));
+        string expectedAuthToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(_authData.ToString()));
 
-        var service = new HttpOrderService(client, _authData, _baseUri, _loggerMock);
+        using HttpClient client = new(new FakeHttpMessageHandler())
+        {
+            BaseAddress = _baseUri,
+            DefaultRequestHeaders = { Authorization = new AuthenticationHeaderValue("Basic", expectedAuthToken) }
+        };
+
+        HttpOrderService service = new(client, _loggerMock);
 
         client.BaseAddress.Should().Be(_baseUri);
         client.DefaultRequestHeaders.Authorization.Should().NotBeNull();
@@ -64,7 +70,7 @@ public sealed class HttpOrderServiceFixture
     [Fact]
     public async Task GetMenuAsync_WhenResponseIsSuccessful_ShouldReturnMappedMenuItems()
     {
-        var apiResponse = new HttpCommandResponse<GetMenuData>
+        HttpCommandResponse<GetMenuData> apiResponse = new()
         {
             Success = true,
             Data = new GetMenuData
@@ -85,16 +91,22 @@ public sealed class HttpOrderServiceFixture
             }
         };
 
-        var handler = new FakeHttpMessageHandler
+        FakeHttpMessageHandler handler = new()
         {
-            ResponseFactory = req => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            ResponseFactory = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = JsonContent.Create(apiResponse)
             })
         };
+        string expectedAuthToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(_authData.ToString()));
 
-        using var client = new HttpClient(handler);
-        var service = new HttpOrderService(client, _authData, _baseUri, _loggerMock);
+        using HttpClient client = new(handler);
+
+        client.BaseAddress = _baseUri;
+
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", expectedAuthToken);
+
+        HttpOrderService service = new(client, _loggerMock);
 
         List<SmsMenuItem> result = await service.GetMenuAsync(true, CancellationToken.None);
 
@@ -112,14 +124,20 @@ public sealed class HttpOrderServiceFixture
     [Fact]
     public async Task GetMenuAsync_WhenHttpErrorOccurs_ShouldThrowHttpRequestException()
     {
-        var handler = new FakeHttpMessageHandler
+        FakeHttpMessageHandler handler = new()
         {
             ResponseFactory = req => Task.FromResult(new HttpResponseMessage(HttpStatusCode.InternalServerError))
         };
 
-        using var client = new HttpClient(handler);
+        string expectedAuthToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(_authData.ToString()));
 
-        var service = new HttpOrderService(client, _authData, _baseUri, _loggerMock);
+        using HttpClient client = new(handler);
+
+        client.BaseAddress = _baseUri;
+
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", expectedAuthToken);
+
+        HttpOrderService service = new(client, _loggerMock);
 
         Func<Task> act = async () => await service.GetMenuAsync(false, CancellationToken.None);
 
@@ -147,16 +165,23 @@ public sealed class HttpOrderServiceFixture
         }
         else
         {
-            var apiResponse = new HttpCommandResponse<GetMenuData>
+            HttpCommandResponse<GetMenuData> apiResponse = new()
             {
                 Success = successFlag, Data = returnNullData ? null : new GetMenuData { MenuItems = [] }
             };
             httpResponse = new HttpResponseMessage(HttpStatusCode.OK) { Content = JsonContent.Create(apiResponse) };
         }
 
-        var handler = new FakeHttpMessageHandler { ResponseFactory = req => Task.FromResult(httpResponse) };
-        using var client = new HttpClient(handler);
-        var service = new HttpOrderService(client, _authData, _baseUri, _loggerMock);
+        FakeHttpMessageHandler handler = new() { ResponseFactory = req => Task.FromResult(httpResponse) };
+        string expectedAuthToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(_authData.ToString()));
+
+        using HttpClient client = new(handler);
+
+        client.BaseAddress = _baseUri;
+
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", expectedAuthToken);
+
+        HttpOrderService service = new(client, _loggerMock);
 
         Func<Task> act = async () => await service.GetMenuAsync(true, CancellationToken.None);
 
@@ -166,7 +191,7 @@ public sealed class HttpOrderServiceFixture
     [Fact]
     public async Task SendOrderAsync_WhenSuccessful_ShouldPostCorrectJsonAndReturnTrue()
     {
-        var handler = new FakeHttpMessageHandler
+        FakeHttpMessageHandler handler = new()
         {
             ResponseFactory = req => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
             {
@@ -174,13 +199,17 @@ public sealed class HttpOrderServiceFixture
             })
         };
 
-        using var client = new HttpClient(handler);
-        var service = new HttpOrderService(client, _authData, _baseUri, _loggerMock);
-        var guid = Guid.NewGuid();
-        var smsOrder = new SmsOrder
-        {
-            Id = guid, Items = [new SmsOrderingItem { MenuItemId = 408L, Quantity = 0.408 }]
-        };
+        string expectedAuthToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(_authData.ToString()));
+
+        using HttpClient client = new(handler);
+
+        client.BaseAddress = _baseUri;
+
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", expectedAuthToken);
+
+        HttpOrderService service = new(client, _loggerMock);
+        Guid guid = Guid.NewGuid();
+        SmsOrder smsOrder = new() { Id = guid, Items = [new SmsOrderingItem { MenuItemId = 408L, Quantity = 0.408 }] };
 
         bool result = await service.SendOrderAsync(smsOrder, CancellationToken.None);
 
@@ -188,28 +217,28 @@ public sealed class HttpOrderServiceFixture
         handler.LastRequest.Should().NotBeNull();
         handler.LastRequest!.Method.Should().Be(HttpMethod.Post);
 
-        var rawJson = await handler.LastRequest.Content!.ReadAsStringAsync();
-        using var jsonDoc = JsonDocument.Parse(rawJson);
+        string rawJson = await handler.LastRequest.Content!.ReadAsStringAsync();
+        using JsonDocument jsonDoc = JsonDocument.Parse(rawJson);
 
         jsonDoc.RootElement.GetProperty("Command").GetString().Should().Be("SendOrder");
 
-        var cmdParams = jsonDoc.RootElement.GetProperty("CommandParameters");
+        JsonElement cmdParams = jsonDoc.RootElement.GetProperty("CommandParameters");
         cmdParams.GetProperty("OrderId").GetString().Should().Be(guid.ToString());
 
-        var menuItemsArray = cmdParams.GetProperty("MenuItems");
+        JsonElement menuItemsArray = cmdParams.GetProperty("MenuItems");
         menuItemsArray.EnumerateArray().Count().Should().Be(1);
 
-        var firstItem = menuItemsArray[0];
+        JsonElement firstItem = menuItemsArray[0];
         firstItem.GetProperty("Id").GetString().Should().Be("408");
 
-        var expectedQuantityStr = 0.408m.ToString(CultureInfo.CurrentCulture);
+        string expectedQuantityStr = 0.408m.ToString(CultureInfo.CurrentCulture);
         firstItem.GetProperty("Quantity").GetString().Should().Be(expectedQuantityStr);
     }
 
     [Fact]
     public async Task SendOrderAsync_WhenApiReturnsSuccessFalse_ShouldReturnFalse()
     {
-        var handler = new FakeHttpMessageHandler
+        FakeHttpMessageHandler handler = new()
         {
             ResponseFactory = req => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
             {
@@ -217,9 +246,16 @@ public sealed class HttpOrderServiceFixture
             })
         };
 
-        using var client = new HttpClient(handler);
-        var service = new HttpOrderService(client, _authData, _baseUri, _loggerMock);
-        var smsOrder = new SmsOrder { Id = Guid.NewGuid(), Items = [] };
+        string expectedAuthToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(_authData.ToString()));
+
+        using HttpClient client = new(handler);
+
+        client.BaseAddress = _baseUri;
+
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", expectedAuthToken);
+
+        HttpOrderService service = new(client, _loggerMock);
+        SmsOrder smsOrder = new() { Id = Guid.NewGuid(), Items = [] };
 
         bool result = await service.SendOrderAsync(smsOrder, CancellationToken.None);
 
@@ -229,14 +265,22 @@ public sealed class HttpOrderServiceFixture
     [Fact]
     public async Task SendOrderAsync_WhenHttpErrorOccurs_ShouldThrowHttpRequestException()
     {
-        var handler = new FakeHttpMessageHandler
+        FakeHttpMessageHandler handler = new()
         {
             ResponseFactory = req => Task.FromResult(new HttpResponseMessage(HttpStatusCode.BadRequest))
         };
 
-        using var client = new HttpClient(handler);
-        var service = new HttpOrderService(client, _authData, _baseUri, _loggerMock);
-        var smsOrder = new SmsOrder { Id = Guid.NewGuid(), Items = [] };
+        string expectedAuthToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(_authData.ToString()));
+
+        using HttpClient client = new(handler);
+
+        client.BaseAddress = _baseUri;
+
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", expectedAuthToken);
+
+        HttpOrderService service = new(client, _loggerMock);
+
+        SmsOrder smsOrder = new() { Id = Guid.NewGuid(), Items = [] };
 
         Func<Task> act = async () => await service.SendOrderAsync(smsOrder, CancellationToken.None);
 
