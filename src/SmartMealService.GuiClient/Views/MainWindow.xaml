@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:viewModels="clr-namespace:SmartMealService.GuiClient.ViewModels"
+        xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
         mc:Ignorable="d"
         Title="Тестовое WPF-приложение для SmartMealService"
         Height="450"
@@ -23,18 +24,29 @@
         </Grid.RowDefinitions>
 
         <DataGrid Grid.Row="1"
-            ItemsSource="{Binding EnvironmentVariables}"
-            AutoGenerateColumns="False"
-            CanUserAddRows="True"
-            CanUserDeleteRows="True"
-            SelectionMode="Single"
-            RowEditEnding="VariablesDataGrid_RowEditEnding"
-            PreviewKeyDown="VariablesDataGrid_PreviewKeyDown"
-            BorderBrush="#CCCCCC"
-            BorderThickness="1"
-            Background="White"
-            RowHeight="32"
-            FontSize="14">
+                  ItemsSource="{Binding EnvironmentVariables}"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="True"
+                  CanUserDeleteRows="True"
+                  SelectionMode="Single"
+                  BorderBrush="#CCCCCC"
+                  BorderThickness="1"
+                  Background="White"
+                  RowHeight="32"
+                  FontSize="14">
+
+            <DataGrid.InputBindings>
+                <KeyBinding Key="Delete"
+                            Command="{Binding DeleteVariableCommand}"
+                            CommandParameter="{Binding ElementName=VariablesGrid, Path=SelectedItem}" />
+            </DataGrid.InputBindings>
+
+            <b:Interaction.Triggers>
+                <b:EventTrigger EventName="RowEditEnding">
+                    <b:InvokeCommandAction Command="{Binding CommitNewVariableCommand}"
+                                           CommandParameter="{Binding ElementName=VariablesGrid, Path=SelectedItem}" />
+                </b:EventTrigger>
+            </b:Interaction.Triggers>
 
             <DataGrid.ColumnHeaderStyle>
                 <Style TargetType="DataGridColumnHeader">

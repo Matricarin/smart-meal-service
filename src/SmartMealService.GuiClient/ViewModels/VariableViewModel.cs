@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 using Serilog;
 
@@ -10,6 +11,7 @@ namespace SmartMealService.GuiClient.ViewModels;
 public partial class VariableViewModel : ObservableObject
 {
     private readonly CustomEnvironmentVariable? _model;
+
     [ObservableProperty] private string _comment;
 
     [ObservableProperty] private string _key;
@@ -68,7 +70,7 @@ public partial class VariableViewModel : ObservableObject
 
         _logger.Information("Изменение переменной среды: {Key} = '{Value}'", _key, value);
 
-        Task.Run(async () => await SaveChangesAsync());
+        SaveChangesCommand.Execute(null);
     }
 
     partial void OnCommentChanged(string value)
@@ -87,9 +89,10 @@ public partial class VariableViewModel : ObservableObject
 
         _logger.Information("Изменение комментария для переменной {Key}: '{Comment}'", _key, value);
 
-        Task.Run(async () => await SaveChangesAsync());
+        SaveChangesCommand.Execute(null);
     }
 
+    [RelayCommand]
     private async Task SaveChangesAsync()
     {
         try

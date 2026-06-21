@@ -18,13 +18,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly IVariablesRepository _repository;
 
     [ObservableProperty] private ObservableCollection<VariableViewModel> _environmentVariables = [];
-    
+
     public MainWindowViewModel(IVariablesRepository repository, ILogger logger)
     {
         _repository = repository;
         _logger = logger;
     }
-    
+
     [RelayCommand]
     private async Task LoadVariablesAsync(CancellationToken token)
     {
@@ -53,6 +53,17 @@ public sealed partial class MainWindowViewModel : ObservableObject
         {
             _logger.Error(ex, "Критическая ошибка при заполнении таблицы DataGrid данными");
         }
+    }
+
+    [RelayCommand]
+    private async Task CommitNewVariableAsync(VariableViewModel? variableVm)
+    {
+        if (variableVm == null || string.IsNullOrWhiteSpace(variableVm.Key) || !variableVm.IsNew)
+        {
+            return;
+        }
+
+        await AddNewVariableAsync(variableVm);
     }
 
     public async Task AddNewVariableAsync(VariableViewModel variableVm)
