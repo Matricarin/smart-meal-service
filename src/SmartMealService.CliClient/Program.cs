@@ -1,4 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Net.Http.Headers;
+using System.Text;
+
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -35,16 +38,20 @@ try
         throw new InvalidOperationException("Не найден параметр ServerUri в конфигурации.");
     }
 
+    //  INFO: регистрация HttpClient через специальный метод расширения помогает решить проблему с выбором времени жизни HttpClient
     var serviceProvider = new ServiceCollection()
         .AddSingleton<IConfiguration>(configuration)
         .AddSingleton(Log.Logger)
-        .AddSingleton<HttpClient>()
-        .AddSingleton(authData)
-        .AddSingleton(new Uri(uriString))
         .AddDbContext<MenuDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")))
         .AddScoped<IMenuRepository, MenuRepository>()
-        .AddTransient<IOrderService, HttpOrderService>()
+        .AddHttpClient<IOrderService, HttpOrderService>(client =>
+        {
+            client.BaseAddress = new Uri(uriString);
+            var authToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(authData.ToString()));
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authToken);
+        })
+        .Services
         .BuildServiceProvider();
 
     using (var scope = serviceProvider.CreateScope())

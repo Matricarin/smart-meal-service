@@ -35,7 +35,7 @@ public sealed class MenuRepository : IMenuRepository
             int insertedCount = 0;
             int skippedCount = 0;
 
-            //  UPD: выгребаем данные чанками, чтобы не материализовать полностью все коллекцию в память
+            //  INFO: выгребаем данные чанками, чтобы не материализовать полностью все коллекцию в память
             foreach (var chunk in menuItems.Chunk(ChunkSize))
             {
                 var incomingArticles = chunk.Select(i => i.Article).ToList();
